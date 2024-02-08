@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.37
+# v0.19.38
 
 using Markdown
 using InteractiveUtils
@@ -30,10 +30,6 @@ md"""
 To get the data I used tehh GDELT project and queried from BigQuerry the following SQL
 
 Instructions for the future!
-
-Split the data in two so that you can download the CSVs
-
-**MIGHT NEED TO CHANGE THE SQL BUT FOR NOW IT'S OK**
 
 For `prot_LATAM.csv`
 ```sql
@@ -175,7 +171,7 @@ begin
 	phet = heatmap!(ga, plot_raster;
 	                colormap = Makie.Categorical(:tokyo))
 	
-	poly!(ga, South_america_poly;  
+	poly!(ga, South_america_poly, rasterize=5;  
 	      color = :transparent, strokewidth = .5, strokecolor = :black)
 	scatter!(ga, cities_latam;
 	         color = :white, marker = :star8, markersize = 20, strokewidth = .8,
