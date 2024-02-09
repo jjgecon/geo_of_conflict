@@ -1,4 +1,5 @@
 codes/usefull_codes/
+temp/
 *.csv
 *.shp
 *.dbf
