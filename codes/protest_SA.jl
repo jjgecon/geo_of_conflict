@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.38
+# v0.19.37
 
 using Markdown
 using InteractiveUtils
@@ -13,23 +13,52 @@ begin
 	using GeoMakie: GeoJSON
 end
 
+# ╔═╡ cdaa85f4-6162-46e3-ab6f-744719875283
+md"# Protests in Latin America from 1970-2024"
+
 # ╔═╡ b693b36a-d5db-45c5-b702-2111ea368273
 md"""
+
+# How to Replicate the plot:
+
+To replicate this plot you can fork the project's [github](https://github.com/jjgecon/geo_of_conflict) or download this notebook using the button on the upper-right corner. Then you will need to re-create following folder structure:
+
+```
+📦Geo_of_conflict
+ ┣ 📂codes
+ ┃ ┗ 📜protest_SA.jl
+ ┣ 📂data
+ ┃ ┣ 📂GDELT
+ ┃ ┃ ┗ 📜prot_South_America.csv
+ ┃ ┣ 📂geometries
+ ┃ ┃ ┣ 📂cities
+ ┃ ┃ ┃ ┣ 📜license.txt
+ ┃ ┃ ┃ ┣ 📜worldcities.csv
+ ┃ ┃ ┃ ┗ 📜worldcities.xlsx
+ ┃ ┃ ┗ 📂SOUTH_AMERICA
+ ┃ ┃ ┃ ┣ 📜download.url
+ ┃ ┃ ┃ ┣ 📜SouthAmerica-fgdc.xml
+ ┃ ┃ ┃ ┣ 📜SouthAmerica-iso19110.xml
+ ┃ ┃ ┃ ┣ 📜SouthAmerica-iso19139.xml
+ ┃ ┃ ┃ ┣ 📜SouthAmerica.dbf
+ ┃ ┃ ┃ ┣ 📜SouthAmerica.geojson
+ ┃ ┃ ┃ ┣ 📜SouthAmerica.prj
+ ┃ ┃ ┃ ┣ 📜SouthAmerica.sbn
+ ┃ ┃ ┃ ┣ 📜SouthAmerica.shp
+ ┃ ┃ ┃ ┣ 📜SouthAmerica.shp.xml
+ ┃ ┃ ┃ ┣ 📜SouthAmerica.shx
+ ┃ ┣ 📂misc
+ ┃ ┃ ┗ 📜fips-10-4-to-iso-country-codes.csv
+ ┗ 📂figures
+   ┗ 📜protest_sa.png
+```
 ## Data
 
-### Shapefiles
-
-[South America Shapefiles](https://geodata.mit.edu/catalog/stanford-vc965bq8111)
-[Mexico and Central America + Carribean](https://geodata.mit.edu/catalog/stanford-cq068zf3261)
-
-### Cities
-
-[here](https://simplemaps.com/data/world-cities)
+Now you are ready to download the data and save in their respective folder.
 
 ### Protests
-To get the data I used tehh GDELT project and queried from BigQuerry the following SQL
-
-Instructions for the future!
+For protests I used the GDELT project and took data from BigQuery using the followig
+SQL code
 
 For `prot_LATAM.csv`
 ```sql
@@ -42,16 +71,36 @@ WHERE
   AND EventRootCode = '14'
 ```
 
+once you download the `.csv` please save it under `~/data/GDELT/prot_South_America.csv`.
+
+*Instructions on how to query data from BigQuery comming soon!*
+
+### South America Shapefiles
+
+Download the [South America Shapefiles](https://geodata.mit.edu/catalog/stanford-vc965bq8111) and unzip the folde `data.zip` in `~/data/geometries/SOUTH_AMERICA`.
+
+### Cities
+
+Download the data of all the main cities of the world [here](https://simplemaps.com/data/world-cities). Please select the free version. Unzip the contents in `~/data/geometries/cities`.
+
 ### Aux files
 
-[fips to ISO2 codes](https://github.com/mysociety/gaze/blob/master/data/fips-10-4-to-iso-country-codes.csv)
+In order to merge both the GDELT data and take a subset of countries in the shapefiles I used the following data that contains the [fips to ISO2 codes](https://github.com/mysociety/gaze/blob/master/data/fips-10-4-to-iso-country-codes.csv). Please download the data and save the file in `~/data/misc/fips-10-4-to-iso-country-codes.csv`.
+
+# Process the data
 """
+
+# ╔═╡ bb21ea86-5da8-4c93-a4b0-66aa8049b769
+md"We start with loading the fips to iso codes data"
 
 # ╔═╡ 6b740ef9-444c-42a5-a4c3-6f9779a858d7
 begin
 	fips2iso = DataFrame(CSV.File("../data/misc/fips-10-4-to-iso-country-codes.csv"))
 	rename!(fips2iso, "FIPS10-4" => "fips", "ISO3166" => "iso")
 end;
+
+# ╔═╡ f8c2845c-b453-4daa-9ae1-b3fa72b52944
+md"## Create coordinates of protests events"
 
 # ╔═╡ ae085510-3f87-4e11-aaac-243e316c200a
 begin
@@ -85,6 +134,12 @@ begin
 	
 	protests = select(protests, order_variables, Not(order_variables))
 end
+
+# ╔═╡ 411f3bbf-2aef-4709-8089-3134bc024d01
+md"## Tranform those coordinates into a raster"
+
+# ╔═╡ 27090611-6fa7-477a-bd1d-b9eb3c0be4ca
+md"## Load the Cities and South American Shapefiles"
 
 # ╔═╡ 551a01e3-f515-40e5-a019-43d0c870ee00
 begin
@@ -154,6 +209,28 @@ begin
 	plot_raster = trim(masked_raster)
 end
 
+# ╔═╡ ecf884a4-2349-44e6-9178-b4c18db69017
+begin
+	# A small fix to the limts function
+	function Makie.xlims!(ax::GeoAxis, xlims)
+	    if length(xlims) != 2
+	        error("Invalid xlims length of $(length(xlims)), must be 2.")
+	    elseif xlims[1] == xlims[2] && xlims[1] !== nothing
+	        error("Can't set x limits to the same value $(xlims[1]).")
+	    elseif all(x -> x isa Real, xlims) && xlims[1] > xlims[2]
+	        xlims = reverse(xlims)
+	        ax.xreversed[] = true
+	    else
+	        ax.xreversed[] = false
+	    end
+	    mlims = Makie.convert_limit_attribute(ax.limits[])
+	
+	    ax.limits.val = (xlims, mlims[2])
+	    Makie.reset_limits!(ax; yauto=false)
+	    return nothing
+	end
+end
+
 # ╔═╡ 5cbb570a-aabf-4bfe-af8e-3e7a07f86326
 begin
 	fig = Figure(
@@ -164,7 +241,6 @@ begin
 	ga = GeoAxis(
 	    fig[1, 1]; # any cell of the figure's layout
 	    dest = "+proj=igh", # This one is cool looking
-	    # dest = "+proj=merc",
 	    xticklabelsize = 12, yticklabelsize = 12
 	)
 	
@@ -182,7 +258,7 @@ begin
 	
 	# Put an issue so that it can be resolved
 	ylims!(ga,-57,13)
-	# xlims!(ga,-84,-30)
+	xlims!(ga,-99,-35)
 	
 	fig
 end
@@ -207,10 +283,10 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 [compat]
 ArchGDAL = "~0.10.2"
 CSV = "~0.10.12"
-CairoMakie = "~0.11.6"
+CairoMakie = "~0.11.8"
 DataFrames = "~1.6.1"
 GeoDataFrames = "~0.3.8"
-GeoMakie = "~0.6.0"
+GeoMakie = "~0.6.1"
 Rasters = "~0.10.1"
 Shapefile = "~0.12.0"
 """
@@ -221,7 +297,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.1"
 manifest_format = "2.0"
-project_hash = "48f7121f1f56fa13aec301b28f092730b7e240d0"
+project_hash = "498a95f513f427283a7a3db9b12614d8f8b54ba2"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -374,9 +450,9 @@ version = "1.0.5"
 
 [[deps.CairoMakie]]
 deps = ["CRC32c", "Cairo", "Colors", "FFTW", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "PrecompileTools"]
-git-tree-sha1 = "8af8e491c0809610cdec28c9c44b1f1dce01046d"
+git-tree-sha1 = "a80d49ed3333f5f78df8ffe76d07e88cc35e9172"
 uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-version = "0.11.6"
+version = "0.11.8"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -392,9 +468,9 @@ version = "0.5.1"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
-git-tree-sha1 = "1287e3872d646eed95198457873249bd9f0caed2"
+git-tree-sha1 = "ab79d1f9754a3988a7792caec43bfdc03996020f"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.20.1"
+version = "1.21.0"
 weakdeps = ["SparseArrays"]
 
     [deps.ChainRulesCore.extensions]
@@ -533,9 +609,9 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
 [[deps.DelaunayTriangulation]]
 deps = ["DataStructures", "EnumX", "ExactPredicates", "Random", "SimpleGraphs"]
-git-tree-sha1 = "26eb8e2331b55735c3d305d949aabd7363f07ba7"
+git-tree-sha1 = "d4e9dc4c6106b8d44e40cd4faf8261a678552c7c"
 uuid = "927a84f5-c5f4-47a5-9785-b46e178433df"
-version = "0.8.11"
+version = "0.8.12"
 
 [[deps.DiffResults]]
 deps = ["StaticArraysCore"]
@@ -560,10 +636,10 @@ weakdeps = ["Makie"]
     DimensionalDataMakie = "Makie"
 
 [[deps.DiskArrays]]
-deps = ["OffsetArrays"]
-git-tree-sha1 = "1bfa9de80f35ac63c6c381b2d43c590875896a1f"
+deps = ["LRUCache", "OffsetArrays"]
+git-tree-sha1 = "ef25c513cad08d7ebbed158c91768ae32f308336"
 uuid = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
-version = "0.3.22"
+version = "0.3.23"
 
 [[deps.Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
@@ -615,9 +691,9 @@ version = "1.0.4"
 
 [[deps.ExactPredicates]]
 deps = ["IntervalArithmetic", "Random", "StaticArrays"]
-git-tree-sha1 = "e8b8c949551f417e040f16e5c431b6e83e306e54"
+git-tree-sha1 = "b3f2ff58735b5f024c392fde763f29b057e4b025"
 uuid = "429591f6-91af-11e9-00e2-59fbe8cec110"
-version = "2.2.7"
+version = "2.2.8"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -823,16 +899,20 @@ uuid = "0329782f-3d07-4b52-b9f6-d3137cf03c7a"
 version = "1.0.2"
 
 [[deps.GeoJSON]]
-deps = ["Extents", "GeoFormatTypes", "GeoInterface", "GeoInterfaceRecipes", "JSON3", "StructTypes", "Tables"]
-git-tree-sha1 = "29bb9a35cac72ccbeb92e37dbfb2feedd5b5aecd"
+deps = ["Extents", "GeoFormatTypes", "GeoInterface", "GeoInterfaceMakie", "GeoInterfaceRecipes", "JSON3", "StructTypes", "Tables"]
+git-tree-sha1 = "5846df44b97b4af377fd057b3a2a393228081a3c"
 uuid = "61d90e0f-e114-555e-ac52-39dfb47a3ef9"
-version = "0.7.3"
+version = "0.8.0"
+weakdeps = ["Makie"]
+
+    [deps.GeoJSON.extensions]
+    GeoJSONMakieExt = "Makie"
 
 [[deps.GeoMakie]]
 deps = ["Colors", "Downloads", "GeoInterface", "GeoJSON", "Geodesy", "GeometryBasics", "ImageIO", "LinearAlgebra", "Makie", "Proj", "Reexport", "Statistics", "StructArrays"]
-git-tree-sha1 = "4b78181e09595949c860304f4d2ee80c9d4e03f3"
+git-tree-sha1 = "2036e8f732018eb0219325ece08389b086bfc600"
 uuid = "db073c08-6b98-4ee5-b6a4-5efafb3259c6"
-version = "0.6.0"
+version = "0.6.1"
 
 [[deps.Geodesy]]
 deps = ["CoordinateTransformations", "Dates", "LinearAlgebra", "StaticArrays"]
@@ -888,16 +968,22 @@ uuid = "42e2da0e-8278-4e71-bc24-59509adca0fe"
 version = "1.0.2"
 
 [[deps.HDF5_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LazyArtifacts", "LibCURL_jll", "Libdl", "MPICH_jll", "MPIPreferences", "MPItrampoline_jll", "MicrosoftMPI_jll", "OpenMPI_jll", "OpenSSL_jll", "TOML", "Zlib_jll", "libaec_jll"]
-git-tree-sha1 = "e4591176488495bf44d7456bd73179d87d5e6eab"
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LLVMOpenMP_jll", "LazyArtifacts", "LibCURL_jll", "Libdl", "MPICH_jll", "MPIPreferences", "MPItrampoline_jll", "MicrosoftMPI_jll", "OpenMPI_jll", "OpenSSL_jll", "TOML", "Zlib_jll", "libaec_jll"]
+git-tree-sha1 = "38c8874692d48d5440d5752d6c74b0c6b0b60739"
 uuid = "0234f1f7-429e-5d53-9886-15a909be8d59"
-version = "1.14.3+1"
+version = "1.14.2+1"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg"]
 git-tree-sha1 = "129acf094d168394e80ee1dc4bc06ec835e510a3"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
 version = "2.8.1+1"
+
+[[deps.Hwloc_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "ca0f6bf568b4bfc807e7537f081c81e35ceca114"
+uuid = "e33a78d0-f292-5ffc-b300-72abe9b543c8"
+version = "2.10.0+0"
 
 [[deps.HypergeometricFunctions]]
 deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
@@ -1002,13 +1088,13 @@ weakdeps = ["DiffRules", "RecipesBase"]
     IntervalArithmeticRecipesBaseExt = "RecipesBase"
 
 [[deps.IntervalSets]]
-deps = ["Dates", "Random"]
-git-tree-sha1 = "3d8866c029dd6b16e69e0d4a939c4dfcb98fac47"
+git-tree-sha1 = "581191b15bcb56a2aa257e9c160085d0f128a380"
 uuid = "8197267c-284f-5f27-9208-e0e47529a953"
-version = "0.7.8"
-weakdeps = ["Statistics"]
+version = "0.7.9"
+weakdeps = ["Random", "Statistics"]
 
     [deps.IntervalSets.extensions]
+    IntervalSetsRandomExt = "Random"
     IntervalSetsStatisticsExt = "Statistics"
 
 [[deps.InvertedIndices]]
@@ -1102,6 +1188,15 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "d986ce2d884d49126836ea94ed5bfb0f12679713"
 uuid = "1d63c593-3942-5779-bab2-d838dc0a180e"
 version = "15.0.7+0"
+
+[[deps.LRUCache]]
+git-tree-sha1 = "b3cc6698599b10e652832c2f23db3cab99d51b59"
+uuid = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
+version = "1.6.1"
+weakdeps = ["Serialization"]
+
+    [deps.LRUCache.extensions]
+    SerializationExt = ["Serialization"]
 
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1277,10 +1372,10 @@ uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 version = "0.5.13"
 
 [[deps.Makie]]
-deps = ["Animations", "Base64", "CRC32c", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "DelaunayTriangulation", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG_jll", "FileIO", "FilePaths", "FixedPointNumbers", "Formatting", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageIO", "InteractiveUtils", "IntervalSets", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MacroTools", "MakieCore", "Markdown", "MathTeXEngine", "Observables", "OffsetArrays", "Packing", "PlotUtils", "PolygonOps", "PrecompileTools", "Printf", "REPL", "Random", "RelocatableFolders", "Scratch", "ShaderAbstractions", "Showoff", "SignedDistanceFields", "SparseArrays", "StableHashTraits", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun"]
-git-tree-sha1 = "5458e49833d178c071dd6ab6938ac5320f37bc98"
+deps = ["Animations", "Base64", "CRC32c", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "DelaunayTriangulation", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG_jll", "FileIO", "FilePaths", "FixedPointNumbers", "Formatting", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageIO", "InteractiveUtils", "IntervalArithmetic", "IntervalSets", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MacroTools", "MakieCore", "Markdown", "MathTeXEngine", "Observables", "OffsetArrays", "Packing", "PlotUtils", "PolygonOps", "PrecompileTools", "Printf", "REPL", "Random", "RelocatableFolders", "Scratch", "ShaderAbstractions", "Showoff", "SignedDistanceFields", "SparseArrays", "StableHashTraits", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun"]
+git-tree-sha1 = "40c5dfbb99c91835171536cd571fe6f1ba18ff97"
 uuid = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-version = "0.20.5"
+version = "0.20.7"
 
 [[deps.MakieCore]]
 deps = ["Observables", "REPL"]
@@ -1438,10 +1533,10 @@ uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
 version = "0.8.1+0"
 
 [[deps.OpenMPI_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "MPIPreferences", "TOML"]
-git-tree-sha1 = "e25c1778a98e34219a00455d6e4384e017ea9762"
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "Hwloc_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "MPIPreferences", "PMIx_jll", "TOML", "Zlib_jll", "libevent_jll", "prrte_jll"]
+git-tree-sha1 = "1d1421618bab0e820bdc7ae1a2b46ce576981273"
 uuid = "fe0851c0-eecd-5654-98d4-656369965a5c"
-version = "4.1.6+0"
+version = "5.0.1+0"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1457,9 +1552,9 @@ version = "0.5.5+0"
 
 [[deps.Optim]]
 deps = ["Compat", "FillArrays", "ForwardDiff", "LineSearches", "LinearAlgebra", "MathOptInterface", "NLSolversBase", "NaNMath", "Parameters", "PositiveFactorizations", "Printf", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "47fea72de134f75b105a5d4a1abe5c6aec89d390"
+git-tree-sha1 = "d024bfb56144d947d4fafcd9cb5cafbe3410b133"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "1.9.1"
+version = "1.9.2"
 
 [[deps.Opus_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1488,6 +1583,12 @@ deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
 git-tree-sha1 = "949347156c25054de2db3b166c52ac4728cbad65"
 uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
 version = "0.11.31"
+
+[[deps.PMIx_jll]]
+deps = ["Artifacts", "Hwloc_jll", "JLLWrappers", "Libdl", "Zlib_jll", "libevent_jll"]
+git-tree-sha1 = "8b3b19351fa24791f94d7ae85faf845ca1362541"
+uuid = "32165bc3-0280-59bc-8c0b-c33b6203efab"
+version = "4.2.7+0"
 
 [[deps.PNGFiles]]
 deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
@@ -1996,9 +2097,9 @@ uuid = "731e570b-9d59-4bfa-96dc-6df516fadf69"
 version = "0.6.8"
 
 [[deps.TranscodingStreams]]
-git-tree-sha1 = "1fbeaaca45801b4ba17c251dd8603ef24801dd84"
+git-tree-sha1 = "54194d92959d8ebaa8e26227dbe3cdefcdcd594f"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
-version = "0.10.2"
+version = "0.10.3"
 weakdeps = ["Random", "Test"]
 
     [deps.TranscodingStreams.extensions]
@@ -2161,6 +2262,12 @@ deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
 version = "5.8.0+0"
 
+[[deps.libevent_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "OpenSSL_jll"]
+git-tree-sha1 = "f04ec6d9a186115fb38f858f05c0c4e1b7fc9dcb"
+uuid = "1080aeaf-3a6a-583e-a51c-c537b09f60ec"
+version = "2.1.13+1"
+
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "daacc84a041563f965be61859a36e17c4e4fcd55"
@@ -2207,6 +2314,12 @@ deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 version = "17.4.0+0"
 
+[[deps.prrte_jll]]
+deps = ["Artifacts", "Hwloc_jll", "JLLWrappers", "Libdl", "PMIx_jll", "libevent_jll"]
+git-tree-sha1 = "5adb2d7a18a30280feb66cad6f1a1dfdca2dc7b0"
+uuid = "eb928a42-fffd-568d-ab9c-3f5d54fc65b9"
+version = "3.0.2+0"
+
 [[deps.snappy_jll]]
 deps = ["Artifacts", "JLLWrappers", "LZO_jll", "Libdl", "Pkg", "Zlib_jll"]
 git-tree-sha1 = "985c1da710b0e43f7c52f037441021dfd0e3be14"
@@ -2227,14 +2340,20 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╟─b693b36a-d5db-45c5-b702-2111ea368273
-# ╠═05a32620-c204-11ee-1bd2-01c3e1c62833
-# ╠═6b740ef9-444c-42a5-a4c3-6f9779a858d7
-# ╠═ae085510-3f87-4e11-aaac-243e316c200a
-# ╠═551a01e3-f515-40e5-a019-43d0c870ee00
-# ╠═db7ff01a-d4a7-49a7-b182-607170efa3d7
-# ╠═d6f4312e-9c54-4088-808c-8fc7be8c1c96
+# ╟─cdaa85f4-6162-46e3-ab6f-744719875283
 # ╠═5cbb570a-aabf-4bfe-af8e-3e7a07f86326
 # ╠═034329ad-6f54-4d00-868b-bf3dc938e424
+# ╟─b693b36a-d5db-45c5-b702-2111ea368273
+# ╠═05a32620-c204-11ee-1bd2-01c3e1c62833
+# ╟─bb21ea86-5da8-4c93-a4b0-66aa8049b769
+# ╠═6b740ef9-444c-42a5-a4c3-6f9779a858d7
+# ╟─f8c2845c-b453-4daa-9ae1-b3fa72b52944
+# ╠═ae085510-3f87-4e11-aaac-243e316c200a
+# ╟─411f3bbf-2aef-4709-8089-3134bc024d01
+# ╠═d6f4312e-9c54-4088-808c-8fc7be8c1c96
+# ╟─27090611-6fa7-477a-bd1d-b9eb3c0be4ca
+# ╠═551a01e3-f515-40e5-a019-43d0c870ee00
+# ╠═db7ff01a-d4a7-49a7-b182-607170efa3d7
+# ╟─ecf884a4-2349-44e6-9178-b4c18db69017
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
