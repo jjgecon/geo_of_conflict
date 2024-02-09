@@ -1,2 +1,13 @@
-data/
 codes/usefull_codes/
+*.csv
+*.shp
+*.dbf
+*.prj
+*.sbn
+*.xml
+*.shx
+*.zip
+*.cpg
+*.sbx
+*.geojson
+*.xlsx
