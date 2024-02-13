@@ -12,58 +12,58 @@ This notes will guide you to get your first query results from BigQuery using th
 
 1. Clikc on the following [link](https://cloud.google.com/bigquery?hl=en) and click on *Try BigQuery free*:
 
-![](media\0_try_bigquerry.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/0_try_bigquerry.PNG)
 
 2. Sign in into your Google account.
 
 3. Set up your country.
 
-![](media\1_set_up_country.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/1_set_up_country.PNG)
 
 4. Set up your payment. With the free trial you will get $300 in queries for free for a 90 days.
 
-![](media\2_set_up_payments.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/2_set_up_payments.PNG)
 
 5. Finish the account creating with some descriptions
 
-![](media\3_set_up_description.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/3_set_up_description.PNG)
 
 6. You should have access to your Google Cloud Console.
 
-![](media\4_project_main_screen.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/4_project_main_screen.PNG)
 
 7. Create your first project by clicking on the top left were it says **My First Project**. Note that *My First Project* is automatically created for you. But we will need to set up a new one with access to the BigQuery API.
 
-![](media\5_create_project.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/5_create_project.PNG)
 
 8. Click on  **NEW PROJECT**.
 
-![](media\6_click_new_project.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/6_click_new_project.PNG)
 
 9. Name your new project. I chose to use *GDELTexploration*.
 
-![](media\7_name_project.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/7_name_project.PNG)
 
 10. You will be redirected to the main page of Google Cloud. Now select **My First Project** and change to the new project.
 
-![](media\8_cahnge_to_new_project.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/8_cahnge_to_new_project.PNG)
 
 11. You should now see **YOUR PROJECT NAME** at the top left.
 
-![](media\9_check_project.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/9_check_project.PNG)
 
 12. Now we need to enable the BigQuery API. For that expand the options on the top left corner and select *BigQuery*.
 
-![](media\10_expand_options.PNG)
-![](media\11_select_bigquery.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/10_expand_options.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/11_select_bigquery.PNG)
 
 13. Click on **ENABLE**.
 
-![](media\12_enable_BQ_api.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/12_enable_BQ_api.PNG)
 
 14. You will be redirected to the BigQuery console
 
-![](media\13_BQ_greeting.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/13_BQ_greeting.PNG)
 
 Now you can use BigQuery as you please. 
 
@@ -73,9 +73,9 @@ Now you can use BigQuery as you please.
 
 2. Select on the **+** button to open a text editor. 
 
-![](media\14_click_on_plus.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/14_click_on_plus.PNG)
 
-![](media\15_sql_notepad.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/15_sql_notepad.PNG)
 
 3. Copy and paste the following SQL code
 
@@ -88,29 +88,29 @@ Now you can use BigQuery as you please.
     ActionGeo_CountryCode = 'CI' -- Subset for Chile
     AND EventRootCode = '14' -- Subset Protest
 ```
-![](media\16_copy_paste_sql.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/16_copy_paste_sql.PNG)
 
 Notice that we are pulling data from the `gdelt-bq.full.events` (or GDELT 2.0 Events database), subseting for protest events that happened in Chile.
 
 Another thing to note is the amount of data that this SQL will pull.
 
-![](media\16_1_request_GB.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/16_1_request_GB.PNG)
 
 This query will pull around 36 GB, which is usually a number with no limit and no charge if you live in the U.S. There are data limitations on how much data you can pull from BigQuery and if you exceed that amount you might get charged. Please refer to [BigQuery's Pricing Policy](https://cloud.google.com/bigquery/pricing) for more information.
 
 4. Hit on **RUN**.
 
-![](media\16_2_run_code.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/16_2_run_code.PNG)
 
 5. When the script finishes running you will have the following results in the bottom panel:
 
-![](media\16_3_resutls.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/16_3_resutls.PNG)
 
 6. The last step would be to export or download the dataset. Select on **SAVE RESULTS** and chose the option you would like to use. 
 
-![](media\16_4_save_resutls.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/16_4_save_resutls.PNG)
 
-![](media\16_5_select_how_to_save_results.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/16_5_select_how_to_save_results.PNG)
 
 ## Explore the GDELT dataset
 
@@ -122,7 +122,7 @@ If we want to explore what other variables there are in GDELT inside BigQuery we
 
 2. A new panel on the right will show up. Scroll down until you see **Public Datasets**
 
-![](media\18_add_expand.PNG)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/media/18_add_expand.PNG)
 ![](media/19_select_on_public_ds.PNG)
 
 3. Search for *gdelt* in the search bar and click on the **GDELT 2.0 Event Database**.
