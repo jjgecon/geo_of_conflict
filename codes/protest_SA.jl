@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.37
+# v0.19.38
 
 using Markdown
 using InteractiveUtils
@@ -14,7 +14,11 @@ begin
 end
 
 # ╔═╡ cdaa85f4-6162-46e3-ab6f-744719875283
-md"# Protests in Latin America from 1970-2024"
+md"""
+# Protests in Latin America from 1970-2024
+
+*Running the code for the first time will take a couple of minutes to set up.*
+"""
 
 # ╔═╡ b693b36a-d5db-45c5-b702-2111ea368273
 md"""
@@ -58,9 +62,7 @@ Now you are ready to download the data and save in their respective folder.
 
 ### Protests
 For protests I used the GDELT project and took data from BigQuery using the followig
-SQL code
-
-For `prot_LATAM.csv`
+SQL code:
 ```sql
 SELECT
   ActionGeo_CountryCode, ActionGeo_Lat, ActionGeo_Long, ActionGeo_FeatureID, SQLDATE, Year
@@ -71,7 +73,7 @@ WHERE
   AND EventRootCode = '14'
 ```
 
-once you download the `.csv` please save it under `~/data/GDELT/prot_South_America.csv`.
+Download the results and store in `~/data/GDELT/prot_South_America.csv`.
 
 *Instructions on how to query data from BigQuery comming soon!*
 
@@ -2343,7 +2345,7 @@ version = "3.5.0+0"
 # ╟─cdaa85f4-6162-46e3-ab6f-744719875283
 # ╠═5cbb570a-aabf-4bfe-af8e-3e7a07f86326
 # ╠═034329ad-6f54-4d00-868b-bf3dc938e424
-# ╟─b693b36a-d5db-45c5-b702-2111ea368273
+# ╠═b693b36a-d5db-45c5-b702-2111ea368273
 # ╠═05a32620-c204-11ee-1bd2-01c3e1c62833
 # ╟─bb21ea86-5da8-4c93-a4b0-66aa8049b769
 # ╠═6b740ef9-444c-42a5-a4c3-6f9779a858d7
