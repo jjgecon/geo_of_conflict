@@ -75,7 +75,7 @@ WHERE
 
 Download the results and store in `~/data/GDELT/prot_South_America.csv`.
 
-*Instructions on how to query data from BigQuery comming soon!*
+To access Google BigQuery you can follow this [guide](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/querry_data_from_BigQuery.md).
 
 ### South America Shapefiles
 
@@ -2345,7 +2345,7 @@ version = "3.5.0+0"
 # ╟─cdaa85f4-6162-46e3-ab6f-744719875283
 # ╠═5cbb570a-aabf-4bfe-af8e-3e7a07f86326
 # ╠═034329ad-6f54-4d00-868b-bf3dc938e424
-# ╠═b693b36a-d5db-45c5-b702-2111ea368273
+# ╟─b693b36a-d5db-45c5-b702-2111ea368273
 # ╠═05a32620-c204-11ee-1bd2-01c3e1c62833
 # ╟─bb21ea86-5da8-4c93-a4b0-66aa8049b769
 # ╠═6b740ef9-444c-42a5-a4c3-6f9779a858d7
