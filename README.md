@@ -3,7 +3,7 @@
 
 This project uses data to showcase compelling images of protests, historical wars, and pivotal moments around the world.
 
-  a         |  a
+  South America         |  North and Central America
 :-------------------------:|:-------------------------:
 ![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_sa.png)  |  ![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_na.png)
 
