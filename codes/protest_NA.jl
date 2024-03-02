@@ -30,7 +30,7 @@ To replicate this plot you can fork the project's [github](https://github.com/jj
 ```
 📦Geo_of_conflict
  ┣ 📂codes
- ┃ ┗ 📜protest_SA.jl
+ ┃ ┗ 📜protest_NA.jl
  ┣ 📂data
  ┃ ┣ 📂GDELT
  ┃ ┃ ┗ 📜prot_North_Central_America.csv
@@ -262,7 +262,6 @@ begin
 	Colorbar(fig[2, :], phet; 
 	         vertical = false, size = 25, label = "Quantiles of Protest Events")
 	
-	# Put an issue so that it can be resolved
 	ylims!(ga,6,54)
 	xlims!(ga,-130,-52)
 	

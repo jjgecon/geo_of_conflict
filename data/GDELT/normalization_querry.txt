@@ -1,0 +1,9 @@
+SELECT
+  ActionGeo_CountryCode, Year,
+  COUNT(*) AS EntryCount
+FROM
+  `gdelt-bq.full.events`
+GROUP BY
+  ActionGeo_CountryCode, Year
+ORDER BY
+  ActionGeo_CountryCode, Year;
