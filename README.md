@@ -9,7 +9,7 @@ This project uses data to showcase compelling images of protests, historical war
 
   Europe        |  Asia
 :-------------------------:|:-------------------------:
-![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_eu.png)  |  ![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_asia.png)
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_eu.png)  |  ![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_eu.png)
 
 
 
