@@ -7,6 +7,10 @@ This project uses data to showcase compelling images of protests, historical war
 :-------------------------:|:-------------------------:
 ![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_sa.png)  |  ![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_na.png)
 
+  Europe        |  Asia
+
+![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_eu.png)  |  ![](https://github.com/jjgecon/geo_of_conflict/blob/main/figures/protest_asia.png)
+
 
 
 Each image comes with the underlying codes in a [Pluto Notebooks](https://plutojl.org/) using [Julia](https://julialang.org/). For a detailed guide on how to install and use [Pluto Notebooks](https://plutojl.org/) you can follow this [video](https://computationalthinking.mit.edu/Fall23/installation/).
