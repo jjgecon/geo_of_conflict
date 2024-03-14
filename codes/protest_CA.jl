@@ -15,7 +15,7 @@ end
 
 # ╔═╡ cdaa85f4-6162-46e3-ab6f-744719875283
 md"""
-# Protests in Europe from 1970-2024
+# Protests in Central America from 1970-2024
 
 *Running the code for the first time will take a couple of minutes to set up.*
 """
@@ -30,31 +30,32 @@ To replicate this plot you can fork the project's [github](https://github.com/jj
 ```
 📦Geo_of_conflict
  ┣ 📂codes
- ┃ ┗ 📜protest_EU.jl
+ ┃ ┗ 📜protest_NA.jl
  ┣ 📂data
  ┃ ┣ 📂GDELT
- ┃ ┃ ┗ 📜prot_Europe.csv
+ ┃ ┃ ┣ 📜news_country_year.csv
+ ┃ ┃ ┗ 📜prot_Central_America.csv
  ┃ ┣ 📂geometries
  ┃ ┃ ┣ 📂cities
  ┃ ┃ ┃ ┣ 📜license.txt
  ┃ ┃ ┃ ┣ 📜worldcities.csv
  ┃ ┃ ┃ ┗ 📜worldcities.xlsx
- ┃ ┃ ┗ 📂EU_SWASIA
+ ┃ ┃ ┗ 📂NORTH_CENTRAL_AMERICA
  ┃ ┃ ┃ ┣ 📜download.url
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia-fgdc.xml
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia-iso19110.xml
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia-iso19139.xml
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia.dbf
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia.geojson
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia.prj
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia.sbn
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia.shp
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia.shp.xml
- ┃ ┃ ┃ ┣ 📜Europe_SWAsia.shx
+ ┃ ┃ ┃ ┣ 📜North_America-fgdc.xml
+ ┃ ┃ ┃ ┣ 📜North_America-iso19110.xml
+ ┃ ┃ ┃ ┣ 📜North_America-iso19139.xml
+ ┃ ┃ ┃ ┣ 📜North_America.dbf
+ ┃ ┃ ┃ ┣ 📜North_America.geojson
+ ┃ ┃ ┃ ┣ 📜North_America.prj
+ ┃ ┃ ┃ ┣ 📜North_America.sbn
+ ┃ ┃ ┃ ┣ 📜North_America.shp
+ ┃ ┃ ┃ ┣ 📜North_America.shp.xml
+ ┃ ┃ ┃ ┣ 📜North_America.shx
  ┃ ┣ 📂misc
  ┃ ┃ ┗ 📜fips-10-4-to-iso-country-codes.csv
  ┗ 📂figures
-   ┗ 📜protest_eu.png
+   ┗ 📜protest_sa.png
 ```
 ## Data
 
@@ -63,24 +64,40 @@ Now you are ready to download the data and save in their respective folder.
 ### Protests
 For protests I used the GDELT project and took data from BigQuery using the followig
 SQL code:
-
 ```sql
 SELECT
   ActionGeo_CountryCode, ActionGeo_Lat, ActionGeo_Long, ActionGeo_FeatureID, SQLDATE, Year
 FROM
   `gdelt-bq.full.events`
 WHERE 
-  ActionGeo_CountryCode IN("AL","AU","BE","BU","CY","DA","EN","FR","GR","IT","LS","LU","MD", "MJ", "MK", "PL", "RO", "SM", "LO", "SP", "SZ", "UK", "AN", "BO", "BK", "HR", "EZ", "FI", "GM", "HU", "EI", "LG", "LH", "MT", "MN", "NL", "NO", "PO", "RI", "SI", "SW", "UP")
+  ActionGeo_CountryCode IN("PM","CS","NU","HO","ES","GT","BH","CU","HA","DR", "JM", "BF")
   AND EventRootCode = '14'
 ```
 
-Download the results and store in `~/data/GDELT/prot_Europe.csv`. It's recommended that you save the data in Google Drive and then download it from there.
+Download the results and store in `~/data/GDELT/prot_Central_America.csv`.
 
 To access Google BigQuery you can follow this [guide](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/querry_data_from_BigQuery.md).
 
+#### Event normalization
+
+Use Google BigQuery and run the following SQL code:
+```sql
+SELECT
+  ActionGeo_CountryCode, Year,
+  COUNT(*) AS EntryCount
+FROM
+  `gdelt-bq.full.events`
+GROUP BY
+  ActionGeo_CountryCode, Year
+ORDER BY
+  ActionGeo_CountryCode, Year;
+```
+
+Download the results and store in `~/data/GDELT/news_country_year.csv`.
+
 ### Shapefiles
 
-Download the [Europe Shapefiles](https://geodata.mit.edu/catalog/stanford-vc965bq8111) and unzip the folde `data.zip` in `~/data/geometries/EU_SWASIA`.
+Download the [North and Central America Shapefiles](https://geodata.mit.edu/catalog/stanford-cq068zf3261) and unzip the folde `data.zip` in `~/data/geometries/NORTH_CENTRAL_AMERICA`.
 
 ### Cities
 
@@ -108,7 +125,7 @@ md"## Create coordinates of protests events"
 # ╔═╡ ae085510-3f87-4e11-aaac-243e316c200a
 begin
 	# Load the protests
-	protests = DataFrame(CSV.File("../data/GDELT/prot_Europe.csv"))
+	protests = DataFrame(CSV.File("../data/GDELT/prot_Central_America.csv"))
 	
 	# Change the date variable
 	protests.month = parse.(Int, [s[5:6] for s in string.(protests.SQLDATE)])
@@ -138,14 +155,15 @@ begin
 	protests = select(protests, order_variables, Not(order_variables))
 end
 
-# ╔═╡ 1f0480d4-82cf-4bbc-9d79-6fa6ff4bc90a
+# ╔═╡ 80ea31ef-1350-4a21-afa5-fa426f336477
 md"""
 ## Normalize protest events
 
-The GDELT project get's protests events from newpaper articles. This creates a comparison problem because newpapers covered less events in the 2000's than in the 2020's. In order to correctly compare years/countries we need to normalize by the amount of events.
+The GDELT project get's protests events from newpaper articles. This creates a comparison problem because newpapers covered less events in the 2000's than in the 2020's. 
+In order to correctly compare years/countries we need to normalize by the amount of events.
 """
 
-# ╔═╡ 9273bd6b-9208-4930-b413-89d8ffc8c2a1
+# ╔═╡ 1fa8bff7-e4bd-42fe-93fe-7567d3c93e24
 begin
 	norm_data = DataFrame(CSV.File("../data/GDELT/news_country_year.csv"))
 	rename!(norm_data, :ActionGeo_CountryCode => :fips)
@@ -161,6 +179,46 @@ end;
 
 # ╔═╡ 411f3bbf-2aef-4709-8089-3134bc024d01
 md"## Tranform those coordinates into a raster"
+
+# ╔═╡ 27090611-6fa7-477a-bd1d-b9eb3c0be4ca
+md"## Load the Cities and Shapefiles"
+
+# ╔═╡ 551a01e3-f515-40e5-a019-43d0c870ee00
+begin
+	# Cities database
+	cities_df = DataFrame(CSV.File("../data/geometries/cities/worldcities.csv"))
+	
+	# Get the codes from the cities in protests
+	capital_sel = in.(cities_df.iso2, Ref(country_list))
+	
+	# Get those that are CAPITALS
+	pop_sel = in.(cities_df.capital, Ref(["primary"]))
+	
+	cities_df = cities_df[capital_sel .&& pop_sel,:]
+	
+	# Create the geometries
+	cities_df.geometry = createpoint.(collect(zip(cities_df.lng,cities_df.lat)))
+
+	# If you encounter an error comment the following code
+	GeoDataFrames.write("../data/geometries/cities/north_central_america_cities.geojson", cities_df[:,["geometry"]]; crs=GeoFormatTypes.EPSG(3857))
+
+	cities = GeoJSON.read("../data/geometries/cities/north_central_america_cities.geojson")
+end
+
+# ╔═╡ db7ff01a-d4a7-49a7-b182-607170efa3d7
+begin
+	# Shapefiles
+	shape_geo = GeoDataFrames.read("../data/geometries/NORTH_CENTRAL_AMERICA/North_America.shp")
+	
+	# sel by the countries
+	sel = in.(shape_geo.iso_alpha2, Ref(country_list))
+	shape_geo = shape_geo[sel, :]
+	
+	# Need to transform it to GeoJSON to use Table.jl instead of GDAL types
+	GeoDataFrames.write("../data/geometries/NORTH_CENTRAL_AMERICA/north_central_america.geojson", shape_geo[:,["geometry"]]; crs=GeoFormatTypes.EPSG(3857))
+
+	shape_poly = GeoJSON.read("../data/geometries/NORTH_CENTRAL_AMERICA/north_central_america.geojson")
+end
 
 # ╔═╡ d6f4312e-9c54-4088-808c-8fc7be8c1c96
 begin
@@ -187,49 +245,40 @@ begin
 	classify!(protest_raster, classes; others=missing, missingval=missing)
 	
 	# Create a mask for the raster
-	# masked_raster = mask(protest_raster; with = shape_poly)
-	plot_raster = trim(protest_raster)
+	masked_raster = mask(protest_raster; with = shape_poly)
+	plot_raster = trim(masked_raster)
 end
 
-# ╔═╡ 27090611-6fa7-477a-bd1d-b9eb3c0be4ca
-md"## Load the Cities and Shapefiles"
-
-# ╔═╡ 551a01e3-f515-40e5-a019-43d0c870ee00
+# ╔═╡ 5cbb570a-aabf-4bfe-af8e-3e7a07f86326
 begin
-	# Cities database
-	cities_df = DataFrame(CSV.File("../data/geometries/cities/worldcities.csv"))
+	fig = Figure(
+	    size = (900, 900),
+	    backgroundcolor = :navajowhite2,
+	    fontsize = 20
+	)
+	ga = GeoAxis(
+	    fig[1, 1]; 
+	    dest = "+proj=merc",
+	    xticklabelsize = 12, yticklabelsize = 12
+	)
 	
-	# Get the codes from the cities in protests
-	capital_sel = in.(cities_df.iso2, Ref(country_list))
+	phet = heatmap!(ga, plot_raster;
+	                colormap = Makie.Categorical(:tokyo))
 	
-	# Get those that are CAPITALS
-	pop_sel = in.(cities_df.capital, Ref(["primary"]))
+	poly!(ga, shape_poly;  
+	      color = :transparent, strokewidth = 1, strokecolor = :black)
+	scatter!(ga, cities;
+	         color = :white, marker = :star8, markersize = 20, strokewidth = .8,
+	         label = "Capital cities")
 	
-	cities_df = cities_df[capital_sel .&& pop_sel,:]
+	Colorbar(fig[2, :], phet; 
+	         vertical = false, size = 25, label = "Quantiles of Protest Events")
 	
-	# Create the geometries
-	cities_df.geometry = createpoint.(collect(zip(cities_df.lng,cities_df.lat)))
-
-	# If you encounter an error comment the following code
-	GeoDataFrames.write("../data/geometries/cities/europe_cities.geojson", cities_df[:,["geometry"]]; crs=GeoFormatTypes.EPSG(3857))
-
-	cities = GeoJSON.read("../data/geometries/cities/europe_cities.geojson")
+	fig
 end
 
-# ╔═╡ db7ff01a-d4a7-49a7-b182-607170efa3d7
-begin
-	# Shapefiles
-	shape_geo = GeoDataFrames.read("../data/geometries/EU_SWASIA/Europe_SWAsia.shp")
-	
-	# sel by the countries
-	sel = in.(shape_geo.iso_alpha2, Ref(country_list))
-	shape_geo = shape_geo[sel, :]
-	
-	# Need to transform it to GeoJSON to use Table.jl instead of GDAL types
-	GeoDataFrames.write("../data/geometries/EU_SWASIA/europe.geojson", shape_geo[:,["geometry"]]; crs=GeoFormatTypes.EPSG(3857))
-
-	shape_poly = GeoJSON.read("../data/geometries/EU_SWASIA/europe.geojson")
-end
+# ╔═╡ 034329ad-6f54-4d00-868b-bf3dc938e424
+save("../figures/protest_ca.png", fig)
 
 # ╔═╡ 5dd6a1a9-0bdb-487a-9fa2-9aa1a49a3816
 md"""
@@ -257,40 +306,6 @@ begin
 	    return nothing
 	end
 end
-
-# ╔═╡ 5cbb570a-aabf-4bfe-af8e-3e7a07f86326
-begin
-	fig = Figure(
-	    size = (900, 900),
-	    backgroundcolor = :navajowhite2,
-	    fontsize = 20
-	)
-	ga = GeoAxis(
-	    fig[1, 1]; 
-	    dest = "+proj=wintri",
-	    xticklabelsize = 12, yticklabelsize = 12
-	)
-	
-	phet = heatmap!(ga, plot_raster;
-	                colormap = Makie.Categorical(:tokyo))
-	
-	poly!(ga, shape_poly, rasterize=5;  
-	      color = :transparent, strokewidth = 1, strokecolor = :black)
-	scatter!(ga, cities;
-	         color = :white, marker = :star8, markersize = 20, strokewidth = .8,
-	         label = "Capital cities")
-	
-	Colorbar(fig[2, :], phet; 
-	         vertical = false, size = 25, label = "Quantiles of Protest Events")
-	
-	ylims!(ga,33,74)
-	xlims!(ga,-12,54)
-	
-	fig
-end
-
-# ╔═╡ 034329ad-6f54-4d00-868b-bf3dc938e424
-save("../figures/protest_eu.png", fig)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2381,8 +2396,8 @@ version = "3.5.0+0"
 # ╠═6b740ef9-444c-42a5-a4c3-6f9779a858d7
 # ╟─f8c2845c-b453-4daa-9ae1-b3fa72b52944
 # ╠═ae085510-3f87-4e11-aaac-243e316c200a
-# ╟─1f0480d4-82cf-4bbc-9d79-6fa6ff4bc90a
-# ╠═9273bd6b-9208-4930-b413-89d8ffc8c2a1
+# ╟─80ea31ef-1350-4a21-afa5-fa426f336477
+# ╠═1fa8bff7-e4bd-42fe-93fe-7567d3c93e24
 # ╟─411f3bbf-2aef-4709-8089-3134bc024d01
 # ╠═d6f4312e-9c54-4088-808c-8fc7be8c1c96
 # ╟─27090611-6fa7-477a-bd1d-b9eb3c0be4ca

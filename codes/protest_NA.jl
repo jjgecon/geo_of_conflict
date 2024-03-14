@@ -15,7 +15,7 @@ end
 
 # ╔═╡ cdaa85f4-6162-46e3-ab6f-744719875283
 md"""
-# Protests in North and Central America from 1970-2024
+# Protests in North America from 1970-2024
 
 *Running the code for the first time will take a couple of minutes to set up.*
 """
@@ -33,7 +33,8 @@ To replicate this plot you can fork the project's [github](https://github.com/jj
  ┃ ┗ 📜protest_NA.jl
  ┣ 📂data
  ┃ ┣ 📂GDELT
- ┃ ┃ ┗ 📜prot_North_Central_America.csv
+ ┃ ┃ ┣ 📜news_country_year.csv
+ ┃ ┃ ┗ 📜prot_North_America.csv
  ┃ ┣ 📂geometries
  ┃ ┃ ┣ 📂cities
  ┃ ┃ ┃ ┣ 📜license.txt
@@ -69,13 +70,30 @@ SELECT
 FROM
   `gdelt-bq.full.events`
 WHERE 
-  ActionGeo_CountryCode IN("PM","CS","NU","HO","ES","GT","BH","MX","US","CA","CU","HA","DR", "JM", "BF")
+  ActionGeo_CountryCode IN("MX","US","CA")
   AND EventRootCode = '14'
 ```
 
-Download the results and store in `~/data/GDELT/prot_North_Central_America.csv`.
+Download the results and store in `~/data/GDELT/prot_North_America.csv`.
 
 To access Google BigQuery you can follow this [guide](https://github.com/jjgecon/geo_of_conflict/blob/main/instructions/querry_data_from_BigQuery.md).
+
+#### Event normalization
+
+Use Google BigQuery and run the following SQL code:
+```sql
+SELECT
+  ActionGeo_CountryCode, Year,
+  COUNT(*) AS EntryCount
+FROM
+  `gdelt-bq.full.events`
+GROUP BY
+  ActionGeo_CountryCode, Year
+ORDER BY
+  ActionGeo_CountryCode, Year;
+```
+
+Download the results and store in `~/data/GDELT/news_country_year.csv`.
 
 ### Shapefiles
 
@@ -107,7 +125,7 @@ md"## Create coordinates of protests events"
 # ╔═╡ ae085510-3f87-4e11-aaac-243e316c200a
 begin
 	# Load the protests
-	protests = DataFrame(CSV.File("../data/GDELT/prot_North_Central_America.csv"))
+	protests = DataFrame(CSV.File("../data/GDELT/prot_North_America.csv"))
 	
 	# Change the date variable
 	protests.month = parse.(Int, [s[5:6] for s in string.(protests.SQLDATE)])
@@ -136,6 +154,28 @@ begin
 	
 	protests = select(protests, order_variables, Not(order_variables))
 end
+
+# ╔═╡ 80ea31ef-1350-4a21-afa5-fa426f336477
+md"""
+## Normalize protest events
+
+The GDELT project get's protests events from newpaper articles. This creates a comparison problem because newpapers covered less events in the 2000's than in the 2020's. 
+In order to correctly compare years/countries we need to normalize by the amount of events.
+"""
+
+# ╔═╡ 1fa8bff7-e4bd-42fe-93fe-7567d3c93e24
+begin
+	norm_data = DataFrame(CSV.File("../data/GDELT/news_country_year.csv"))
+	rename!(norm_data, :ActionGeo_CountryCode => :fips)
+	norm_data = norm_data[.!ismissing.(norm_data.fips),:]
+
+	norm_data = DataFrames.combine(groupby(norm_data,:fips), :EntryCount => sum => :EntryCount)
+	# merge the event count
+	leftjoin!(protests, norm_data, on = :fips)
+
+	# create the event weights
+	protests.event_w = 1 ./ protests.EntryCount
+end;
 
 # ╔═╡ 411f3bbf-2aef-4709-8089-3134bc024d01
 md"## Tranform those coordinates into a raster"
@@ -182,15 +222,14 @@ end
 
 # ╔═╡ d6f4312e-9c54-4088-808c-8fc7be8c1c96
 begin
-	# Transform from points to raster data
-	protest_raster = rasterize(count, protests.geometry; res = 1, boundary=:touches)
-	protest_raster = rebuild(protest_raster; missingval=0)
+	protest_raster = rasterize(sum, protests[:,[:geometry,:event_w]]; res = .5, boundary=:touches, fill = :event_w)
 	
-	# Get the uantiles of the data
+	protest_raster = rebuild(protest_raster; missingval=missing)
+
 	quantiles = collect(.1:.1:.9)
 	vectorized = DataFrame(vals = collect(protest_raster)[:])
-	allowmissing!(vectorized)
-	vectorized= vectorized[vectorized.vals .!= 0,:]
+	vectorized = vectorized[.!ismissing.(vectorized.vals),:]
+
 	quantile_values = quantile(vectorized.vals, quantiles)
 	
 	classes =   <=(quantile_values[1]) => 1,
@@ -203,7 +242,7 @@ begin
 	            quantile_values[7]..quantile_values[8] => 8,
 	            quantile_values[8]..quantile_values[9] => 8,
 	            >(quantile_values[9]) => 10
-	classify!(protest_raster, classes; others=0, missingval=0)
+	classify!(protest_raster, classes; others=missing, missingval=missing)
 	
 	# Create a mask for the raster
 	masked_raster = mask(protest_raster; with = shape_poly)
@@ -254,15 +293,15 @@ begin
 	                colormap = Makie.Categorical(:tokyo))
 	
 	poly!(ga, shape_poly, rasterize=5;  
-	      color = :transparent, strokewidth = .5, strokecolor = :black)
+	      color = :transparent, strokewidth = 1, strokecolor = :black)
 	scatter!(ga, cities;
 	         color = :white, marker = :star8, markersize = 20, strokewidth = .8,
-	         alpha = .5, label = "Capital cities")
+	         label = "Capital cities")
 	
 	Colorbar(fig[2, :], phet; 
 	         vertical = false, size = 25, label = "Quantiles of Protest Events")
 	
-	ylims!(ga,6,54)
+	ylims!(ga,12,54)
 	xlims!(ga,-130,-52)
 	
 	fig
@@ -2360,6 +2399,8 @@ version = "3.5.0+0"
 # ╠═6b740ef9-444c-42a5-a4c3-6f9779a858d7
 # ╟─f8c2845c-b453-4daa-9ae1-b3fa72b52944
 # ╠═ae085510-3f87-4e11-aaac-243e316c200a
+# ╟─80ea31ef-1350-4a21-afa5-fa426f336477
+# ╠═1fa8bff7-e4bd-42fe-93fe-7567d3c93e24
 # ╟─411f3bbf-2aef-4709-8089-3134bc024d01
 # ╠═d6f4312e-9c54-4088-808c-8fc7be8c1c96
 # ╟─27090611-6fa7-477a-bd1d-b9eb3c0be4ca
